@@ -19,13 +19,36 @@ if 'extracted_codes' not in st.session_state:
     st.session_state.extracted_codes = []
 
 # Function to upload extracted data to Databricks
-def upload_to_databricks():
+def upload_to_databricks(server=None, token=None, schema=None):
     try:
-        response = requests.post(f"{API_BASE_URL}/upload-to-databricks", json=st.session_state.extracted_codes)
-        if response.status_code == 200:
-            st.success("Data successfully uploaded to Databricks!")
-        else:
-            st.error(f"Error uploading to Databricks: {response.text}")
+        # Convert data to DataFrame
+        df = pd.DataFrame(st.session_state.extracted_codes)
+        
+        # Show a spinner during the upload process
+        with st.spinner("Connecting to Databricks and uploading data..."):
+            # In a real implementation, we would use the Databricks API with the provided credentials
+            # For now, we'll just simulate the upload based on the provided parameters
+            
+            if server and token:
+                # Create payload with connection details and data
+                payload = {
+                    "server_url": server,
+                    "token": token,
+                    "schema": schema or "default",
+                    "data": st.session_state.extracted_codes
+                }
+                
+                # In a real-world scenario, you would use the Databricks API here
+                # For now, we'll use a placeholder API endpoint
+                response = requests.post(f"{API_BASE_URL}/upload-to-databricks", json=payload)
+                
+                if response.status_code == 200:
+                    st.success(f"Data successfully uploaded to Databricks schema '{schema or 'default'}'!")
+                else:
+                    st.error(f"Error uploading to Databricks: {response.text}")
+            else:
+                # This should not happen with our form validation, but just in case
+                st.error("Missing Databricks connection details. Please provide server URL and token.")
     except Exception as e:
         st.error(f"Error connecting to Databricks: {str(e)}")
 
@@ -126,7 +149,20 @@ if st.session_state.extracted_codes:
     
     with col2:
         if st.button("Upload to Databricks"):
-            upload_to_databricks()
+            # Create a popup form for Databricks credentials
+            with st.popover("Enter Databricks Connection Details"):
+                # Add input fields for Databricks connection
+                databricks_server = st.text_input("Databricks Server URL", placeholder="https://your-databricks-instance.cloud.databricks.com")
+                databricks_token = st.text_input("Databricks Token", type="password")
+                databricks_schema = st.text_input("Schema Name", placeholder="default")
+                
+                # Add a submit button for the popup
+                if st.button("Connect and Upload"):
+                    if databricks_server and databricks_token:
+                        # Call the upload function with parameters
+                        upload_to_databricks(server=databricks_server, token=databricks_token, schema=databricks_schema)
+                    else:
+                        st.error("Please provide both Server URL and Token")
     
     with col3:
         if st.button("Clear All Data"):
