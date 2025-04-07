@@ -177,6 +177,7 @@ def get_code_info(code):
 def get_code_description(code, code_type):
     """
     Get the description for a medical code using the lookup system.
+    Returns the full info dictionary with category, subcategory, and description.
     """
     # Check if we already have this code's description in our cache
     cache_key = f"{code_type}_{code}"
@@ -186,19 +187,33 @@ def get_code_description(code, code_type):
     # Get code info from lookup
     info = get_code_info(code)
     
-    # Format the description using the code info
-    description = f"{info['category']} | {info['subcategory']} | {info['description']}"
-    
     # Cache the result
-    code_description_cache[cache_key] = description
+    code_description_cache[cache_key] = info
     
-    return description
+    return info
 
-def format_code_with_description(code, code_type, description=None):
+def format_code_with_description(code, code_type, description_info=None):
     """
     Format a code with its description for display or reporting.
     """
-    if description is None:
-        description = get_code_description(code, code_type)
+    if description_info is None:
+        description_info = get_code_description(code, code_type)
     
-    return f"{code} ({code_type}): {description}"
+    # Description_info is now a dictionary with category, subcategory, and description
+    if isinstance(description_info, dict):
+        return {
+            "code": code,
+            "code_type": code_type,
+            "category": description_info.get("category", "Unknown"),
+            "subcategory": description_info.get("subcategory", "Unknown"),
+            "description": description_info.get("description", "Not available")
+        }
+    else:
+        # Backward compatibility for string descriptions
+        return {
+            "code": code,
+            "code_type": code_type,
+            "category": "Unknown",
+            "subcategory": "Unknown",
+            "description": str(description_info)
+        }

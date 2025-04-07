@@ -72,11 +72,12 @@ if uploaded_files:
     st.subheader("Enter Metadata Per File")
     for i, file in enumerate(uploaded_files):
         with st.expander(f"📄 {file.name}", expanded=True):
-            payer = st.text_input(f"Payer for {file.name}", key=f"payer_{i}")
-            plan = st.text_input(f"Plan for {file.name}", key=f"plan_{i}")
-            year = st.number_input(f"Year for {file.name}", min_value=2020, max_value=datetime.now().year,
+            # Simplified metadata inputs without redundant filename mentions
+            payer = st.text_input("Payer", key=f"payer_{i}")
+            plan = st.text_input("Plan", key=f"plan_{i}")
+            year = st.number_input("Year", min_value=2020, max_value=datetime.now().year,
                                    value=datetime.now().year, key=f"year_{i}")
-            lob = st.selectbox(f"Line of Business for {file.name}",
+            lob = st.selectbox("Line of Business",
                                ["Medicare", "Medicaid", "Commercial", "Marketplace", "Other"], key=f"lob_{i}")
 
             if st.button(f"Process {file.name}", key=f"process_{i}"):
@@ -97,14 +98,20 @@ if st.session_state.extracted_codes:
     # Convert to DataFrame for display and export
     df = pd.DataFrame(st.session_state.extracted_codes)
     
-    # Ensure all metadata columns are present
-    required_columns = ["file_name", "payer", "plan", "year", "line_of_business", "code", "code_type", "description"]
+    # Ensure all metadata columns are present (including the new separate description columns)
+    required_columns = ["file_name", "payer", "plan", "year", "line_of_business", 
+                       "code", "code_type", "category", "subcategory", "description"]
     for col in required_columns:
         if col not in df.columns:
             df[col] = ""
     
+    # Reorganize columns for better display
+    column_order = ["code", "code_type", "category", "subcategory", "description", 
+                   "file_name", "payer", "plan", "year", "line_of_business", "timestamp"]
+    display_df = df[[col for col in column_order if col in df.columns]]
+    
     # Show the dataframe with all columns
-    st.dataframe(df)
+    st.dataframe(display_df)
     
     # Add a clear button to reset the extracted codes
     col1, col2, col3 = st.columns(3)
